@@ -75,10 +75,14 @@ class WebsocketWSGIServer(object):
         and the Websocket filedescriptors.
         """
         websocket = None
+        request = None
         subscriber = self.Subscriber(self._redis_connection)
         try:
             self.assure_protocol_requirements(environ)
             request = WSGIRequest(environ)
+            #Request hook
+            if callable(private_settings.WS4REDIS_REQUEST_HOOK):
+                private_settings.WS4REDIS_REQUEST_HOOK(request)
             if callable(private_settings.WS4REDIS_PROCESS_REQUEST):
                 private_settings.WS4REDIS_PROCESS_REQUEST(request)
             else:
@@ -154,4 +158,6 @@ class WebsocketWSGIServer(object):
                     headers = list(headers)
                 start_response(force_str(status), headers)
                 logger.info('Finish non-websocket response with status code: {}'.format(response.status_code))
+        if callable(private_settings.WS4REDIS_RESPONSE_HOOK):
+            private_settings.WS4REDIS_RESPONSE_HOOK(request, response)
         return response
