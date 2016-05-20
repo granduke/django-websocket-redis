@@ -13,7 +13,7 @@ from django.core.exceptions import PermissionDenied
 from django import http
 from django.utils.encoding import force_str
 from django.utils.functional import SimpleLazyObject
-from django.utils.module_loading.import_string
+from django.utils.module_loading import import_string
 from ws4redis import settings as private_settings
 from ws4redis.redis_store import RedisMessage
 from ws4redis.exceptions import WebSocketError, HandshakeError, UpgradeRequiredError
