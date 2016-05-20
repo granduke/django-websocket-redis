@@ -13,6 +13,7 @@ from django.core.exceptions import PermissionDenied
 from django import http
 from django.utils.encoding import force_str
 from django.utils.functional import SimpleLazyObject
+from django.utils.module_loading.import_string
 from ws4redis import settings as private_settings
 from ws4redis.redis_store import RedisMessage
 from ws4redis.exceptions import WebSocketError, HandshakeError, UpgradeRequiredError
@@ -75,10 +76,14 @@ class WebsocketWSGIServer(object):
         and the Websocket filedescriptors.
         """
         websocket = None
+        request = None
         subscriber = self.Subscriber(self._redis_connection)
         try:
             self.assure_protocol_requirements(environ)
             request = WSGIRequest(environ)
+            #Request hook
+            if private_settings.WS4REDIS_REQUEST_HOOK:
+                import_string(private_settings.WS4REDIS_REQUEST_HOOK)(request)
             if callable(private_settings.WS4REDIS_PROCESS_REQUEST):
                 private_settings.WS4REDIS_PROCESS_REQUEST(request)
             else:
@@ -154,4 +159,6 @@ class WebsocketWSGIServer(object):
                     headers = list(headers)
                 start_response(force_str(status), headers)
                 logger.info('Finish non-websocket response with status code: {}'.format(response.status_code))
+        if private_settings.WS4REDIS_RESPONSE_HOOK:
+            import_string(private_settings.WS4REDIS_RESPONSE_HOOK)(request, response)
         return response
